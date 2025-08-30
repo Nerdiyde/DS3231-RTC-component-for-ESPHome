@@ -43,7 +43,7 @@ i2c:
 time:
     - platform: ds3231
         id: ds3231_time
-	        temperature:
+        temperature:
             name: "DS3231 Temperature"
 
 # Optional: Expose actions for automations
