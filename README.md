@@ -24,27 +24,27 @@ The DS3231 is a low-cost, extremely accurate I2C real-time clock (RTC) with an i
 
 ```yaml
 esphome:
-	name: my_ds3231_clock
-	includes:
-		- ds3231/ds3231.h
-		- ds3231/ds3231.cpp
+    name: my_ds3231_clock
+    includes:
+        - ds3231/ds3231.h
+        - ds3231/ds3231.cpp
 
 external_components:
-	- source: github://<your-github-username>/DS3231-RTC-component-for-ESPHome
-		components: [ ds3231 ]
+    - source: github://<your-github-username>/DS3231-RTC-component-for-ESPHome
+        components: [ ds3231 ]
 
 # Enable I2C bus
 i2c:
-	sda: D2
-	scl: D1
-	scan: true
+    sda: D2
+    scl: D1
+    scan: true
 
 # Time component using DS3231
 time:
-	- platform: ds3231
-		id: ds3231_time
-		temperature:
-			name: "DS3231 Temperature"
+    - platform: ds3231
+        id: ds3231_time
+	        temperature:
+            name: "DS3231 Temperature"
 
 # Optional: Expose actions for automations
 # Example: Write current time to RTC
