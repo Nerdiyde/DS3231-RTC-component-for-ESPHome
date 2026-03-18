@@ -52,27 +52,25 @@ void DS3231Component::read_time() {
   }
   time::RealTimeClock::synchronize_epoch_(rtc_time.timestamp);
 
-    // Read and publish temperature from DS3231 internal sensor
+    // --- Read and publish temperature
   if (this->temperature_sensor_ != nullptr) {
-    uint8_t buf[2];
-    if (!this->read_bytes(DS3231_REG_TEMPERATURE, buf, 2)) {
-      ESP_LOGW(TAG, "Failed to read temperature from DS3231");
-      return;
-    }
     
-    // Temperature is stored as a 10-bit value:
-    // - MSB (buf[0]) is a signed 8-bit integer for the whole degrees
-    // - Two most significant bits of LSB (buf[1]) represent 0.25°C each
+    uint8_t buf[2];
+    this->read_bytes(DS3231_REG_TEMPERATURE, buf, 2);
     int8_t temp_msb = static_cast<int8_t>(buf[0]);
     uint8_t temp_lsb = buf[1];
-    
-    // Calculate temperature: int8_t already handles sign, LSB adds fractional part
     float temperature = temp_msb + ((temp_lsb >> 6) * 0.25f);
 
-    // Validate temperature is within DS3231 specifications (-40°C to +85°C)
-    if (temperature < -40.0f || temperature > 85.0f) {
-      ESP_LOGW(TAG, "Temperature reading out of range: %.2f°C", temperature);
-    } else {
+    if ((temp_msb & 0x80) != 0) {
+        temperature = -temperature;
+      }
+
+    // Check for valid temperature range (DS3231: -40°C to +85°C)
+    if (temperature < -40.0f || temperature > 85.0f) 
+    {
+      ESP_LOGE(TAG, "Temperature reading out of range: %.2f°C", temperature);
+    } else
+    {
       this->temperature_sensor_->publish_state(temperature);
       ESP_LOGV(TAG, "Temperature: %.2f°C", temperature);
     }
