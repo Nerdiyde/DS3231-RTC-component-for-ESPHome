@@ -1,3 +1,5 @@
+import inspect
+
 import esphome.config_validation as cv
 import esphome.codegen as cg
 from esphome import automation
@@ -9,6 +11,11 @@ ds3231_ns = cg.esphome_ns.namespace("ds3231")
 DS3231Component = ds3231_ns.class_("DS3231Component", time.RealTimeClock, i2c.I2CDevice)
 WriteAction = ds3231_ns.class_("WriteAction", automation.Action)
 ReadAction = ds3231_ns.class_("ReadAction", automation.Action)
+
+_REGISTER_ACTION_SUPPORTS_SYNC = (
+    "synchronous" in inspect.signature(automation.register_action).parameters
+)
+_REGISTER_ACTION_KWARGS = {"synchronous": False} if _REGISTER_ACTION_SUPPORTS_SYNC else {}
 
 CONFIG_SCHEMA = time.TIME_SCHEMA.extend(
     {
@@ -30,7 +37,7 @@ CONFIG_SCHEMA = time.TIME_SCHEMA.extend(
             cv.GenerateID(): cv.use_id(DS3231Component),
         }
     ),
-    synchronous=False,
+    **_REGISTER_ACTION_KWARGS,
 )
 async def ds3231_write_time_to_code(config, action_id, template_arg, args):
     var = cg.new_Pvariable(action_id, template_arg)
@@ -45,7 +52,7 @@ async def ds3231_write_time_to_code(config, action_id, template_arg, args):
             cv.GenerateID(): cv.use_id(DS3231Component),
         }
     ),
-    synchronous=False,
+    **_REGISTER_ACTION_KWARGS,
 )
 async def ds3231_read_time_to_code(config, action_id, template_arg, args):
     var = cg.new_Pvariable(action_id, template_arg)
