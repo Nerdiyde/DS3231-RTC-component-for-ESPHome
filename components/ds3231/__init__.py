@@ -30,6 +30,7 @@ CONFIG_SCHEMA = time.TIME_SCHEMA.extend(
             cv.GenerateID(): cv.use_id(DS3231Component),
         }
     ),
+    synchronous=False,
 )
 async def ds3231_write_time_to_code(config, action_id, template_arg, args):
     var = cg.new_Pvariable(action_id, template_arg)
@@ -44,6 +45,7 @@ async def ds3231_write_time_to_code(config, action_id, template_arg, args):
             cv.GenerateID(): cv.use_id(DS3231Component),
         }
     ),
+    synchronous=False,
 )
 async def ds3231_read_time_to_code(config, action_id, template_arg, args):
     var = cg.new_Pvariable(action_id, template_arg)
