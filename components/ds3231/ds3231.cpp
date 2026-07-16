@@ -32,6 +32,26 @@ void DS3231Component::read_time() {
   if (!this->read_rtc_()) {
     return;
   }
+
+  // Temperature is independent of the calendar registers. Publish it even
+  // when the RTC has not been initialized or contains an invalid date.
+  if (this->temperature_sensor_ != nullptr) {
+    uint8_t buf[2];
+    if (!this->read_bytes(DS3231_REG_TEMPERATURE, buf, 2)) {
+      ESP_LOGE(TAG, "Can't read temperature data.");
+    } else {
+      const int8_t temp_msb = static_cast<int8_t>(buf[0]);
+      const float temperature = static_cast<float>(temp_msb) + ((buf[1] >> 6) * 0.25f);
+
+      if (temperature < -40.0f || temperature > 85.0f) {
+        ESP_LOGE(TAG, "Temperature reading out of range: %.2f°C", temperature);
+      } else {
+        this->temperature_sensor_->publish_state(temperature);
+        ESP_LOGV(TAG, "Temperature: %.2f°C", temperature);
+      }
+    }
+  }
+
   if (ds3231_.reg.ch) {
     ESP_LOGW(TAG, "RTC halted, not syncing to system clock.");
     return;
@@ -50,30 +70,6 @@ void DS3231Component::read_time() {
     return;
   }
   time::RealTimeClock::synchronize_epoch_(rtc_time.timestamp);
-
-    // --- Read and publish temperature
-  if (this->temperature_sensor_ != nullptr) {
-    
-    uint8_t buf[2];
-    this->read_bytes(DS3231_REG_TEMPERATURE, buf, 2);
-    int8_t temp_msb = static_cast<int8_t>(buf[0]);
-    uint8_t temp_lsb = buf[1];
-    float temperature = temp_msb + ((temp_lsb >> 6) * 0.25f);
-
-    if ((temp_msb & 0x80) != 0) {
-        temperature = -temperature;
-      }
-
-    // Check for valid temperature range (DS3231: -40°C to +85°C)
-    if (temperature < -40.0f || temperature > 85.0f) 
-    {
-      ESP_LOGE(TAG, "Temperature reading out of range: %.2f°C", temperature);
-    } else
-    {
-      this->temperature_sensor_->publish_state(temperature);
-      ESP_LOGV(TAG, "Temperature: %.2f°C", temperature);
-    }
-  }
 }
 
 void DS3231Component::write_time() {
